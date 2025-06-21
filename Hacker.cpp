@@ -36,29 +36,34 @@ public:
     }
 
     void ClearConsole() {
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    DWORD count;
-    DWORD cellCount;
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        DWORD count;
+        DWORD cellCount;
 
-    // Get the number of character cells in the current buffer
-    if (!GetConsoleScreenBufferInfo(TM, &csbi)) return;
-    cellCount = csbi.dwSize.X * csbi.dwSize.Y;
+        // Get the number of character cells in the current buffer
+        if (!GetConsoleScreenBufferInfo(TM, &csbi)) return;
+        cellCount = csbi.dwSize.X * csbi.dwSize.Y;
 
-    // Fill the entire screen with spaces
-    FillConsoleOutputCharacter(TM, ' ', cellCount, { 0, 0 }, &count);
+        // Fill the entire screen with spaces
+        FillConsoleOutputCharacter(TM, ' ', cellCount, { 0, 0 }, &count);
 
-    // Fill the entire screen with the current colors and attributes
-    FillConsoleOutputAttribute(TM, csbi.wAttributes, cellCount, { 0, 0 }, &count);
+        // Fill the entire screen with the current colors and attributes
+        FillConsoleOutputAttribute(TM, csbi.wAttributes, cellCount, { 0, 0 }, &count);
 
-    // Move the cursor to the top-left corner
-    SetConsoleCursorPosition(TM, { 0, 0 });
+        // Move the cursor to the top-left corner
+        SetConsoleCursorPosition(TM, { 0, 0 });
 
-    int CRYPTO = 5492;
-    int CASH = 5492;
-    writeText("@BLUE@CRYPTO:@WHITE@ " + std::to_string(CRYPTO) + " " + "@YELLOW@CASH:@WHITE@ " + std::to_string(CASH));
-    SetConsoleCursorPosition(TM, { 0, 1 });
-}
+        int CRYPTO = 5492;
+        int CASH = 5492;
+        writeText("@BLUE@CRYPTO:@WHITE@ " + std::to_string(CRYPTO) + " " + "@YELLOW@CASH:@WHITE@ " + std::to_string(CASH));
+        SetConsoleCursorPosition(TM, { 0, 1 });
+    }
+
+    void CommandExploit(){
+        
+    }
 };
+
 
 TerminalManager::TerminalManager(HANDLE HD) : TM(HD) {}
 

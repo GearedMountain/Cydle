@@ -4,7 +4,7 @@
 #include <iostream>
 #include <windows.h>
 #include <sstream>
-
+#include <limits> 
 typedef Exploit* (*CreateExploitFn)();
 
 class TerminalManager{
@@ -21,9 +21,12 @@ public:
             //std::cout << "TOKEN IS:" << token << std::endl;
             if(token == "RED") {
                 SetConsoleTextAttribute(TM, 0x0C);
-            } else if (token == "WHITE")
-            {
+            } else if (token == "WHITE") {
                 SetConsoleTextAttribute(TM, 0x0F);
+            } else if (token == "YELLOW") {
+                SetConsoleTextAttribute(TM, 0x0E);
+            } else if (token == "BLUE") {
+                SetConsoleTextAttribute(TM, 0x09);
             } else{
                 std::cout << token;
             }
@@ -31,6 +34,30 @@ public:
         }
         
     }
+
+    void ClearConsole() {
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    DWORD count;
+    DWORD cellCount;
+
+    // Get the number of character cells in the current buffer
+    if (!GetConsoleScreenBufferInfo(TM, &csbi)) return;
+    cellCount = csbi.dwSize.X * csbi.dwSize.Y;
+
+    // Fill the entire screen with spaces
+    FillConsoleOutputCharacter(TM, ' ', cellCount, { 0, 0 }, &count);
+
+    // Fill the entire screen with the current colors and attributes
+    FillConsoleOutputAttribute(TM, csbi.wAttributes, cellCount, { 0, 0 }, &count);
+
+    // Move the cursor to the top-left corner
+    SetConsoleCursorPosition(TM, { 0, 0 });
+
+    int CRYPTO = 5492;
+    int CASH = 5492;
+    writeText("@BLUE@CRYPTO:@WHITE@ " + std::to_string(CRYPTO) + " " + "@YELLOW@CASH:@WHITE@ " + std::to_string(CASH));
+    SetConsoleCursorPosition(TM, { 0, 1 });
+}
 };
 
 TerminalManager::TerminalManager(HANDLE HD) : TM(HD) {}
@@ -40,6 +67,7 @@ int main(){
 
     // Get handle to terminal
     auto TM = new TerminalManager(stdHandle);
+    TM->ClearConsole();
 
     std::vector<Exploit*> loaded_exploits;
     std::vector<HMODULE> dlls;
@@ -72,6 +100,13 @@ int main(){
         int choice;
         std::cout << "Choose an exploit to run: ";
         std::cin >> choice;
+
+        if (std::cin.fail()) {
+            std::cin.clear(); // clear error flags
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // discard bad input
+            TM->writeText("@RED@[!]@WHITE@ Invalid input. Please enter a number.\n");
+            continue;
+        }
 
         if (choice > 0 && choice <= (int)loaded_exploits.size()) {
             TM->writeText(loaded_exploits[choice-1]->instructions());

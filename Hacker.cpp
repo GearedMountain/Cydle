@@ -3,25 +3,43 @@
 #include <vector>
 #include <iostream>
 #include <windows.h>
+#include <sstream>
 
 typedef Exploit* (*CreateExploitFn)();
 
 class TerminalManager{
 private:
-    HANDLE *TM;
+    HANDLE TM;
 public:
     TerminalManager(HANDLE);
     ~TerminalManager(){};
-    void writeText(std::string);
+    void writeText(std::string Instructions) {
+        //Split the instructions by @ sign, read any color inputs
+        std::istringstream ss(Instructions);
+        std::string token;
+        while (std::getline(ss, token, '@')) {
+            //std::cout << "TOKEN IS:" << token << std::endl;
+            if(token == "RED") {
+                SetConsoleTextAttribute(TM, 0x0C);
+            } else if (token == "WHITE")
+            {
+                SetConsoleTextAttribute(TM, 0x0F);
+            } else{
+                std::cout << token;
+            }
+                
+        }
+        
+    }
 };
 
-TerminalManager::TerminalManager(HANDLE TM) : TM(&TM) {}
+TerminalManager::TerminalManager(HANDLE HD) : TM(HD) {}
 
 int main(){
     HANDLE stdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    
+
     // Get handle to terminal
-    auto TM = new TerminalManager(&stdHandle);
+    auto TM = new TerminalManager(stdHandle);
 
     std::vector<Exploit*> loaded_exploits;
     std::vector<HMODULE> dlls;
@@ -56,7 +74,8 @@ int main(){
         std::cin >> choice;
 
         if (choice > 0 && choice <= (int)loaded_exploits.size()) {
-            loaded_exploits[choice - 1]->execute();
+            TM->writeText(loaded_exploits[choice-1]->instructions());
+            //loaded_exploits[choice - 1]->execute();
         }
     }
     for (auto e : loaded_exploits) delete e;

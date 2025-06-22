@@ -5,13 +5,16 @@
 #include <windows.h>
 #include <sstream>
 #include <limits> 
+
+
 typedef Exploit* (*CreateExploitFn)();
 
 class TerminalManager{
 private:
+    std::vector<Exploit*>& loaded_exploits;
     HANDLE TM;
 public:
-    TerminalManager(HANDLE);
+    TerminalManager(HANDLE, std::vector<Exploit*>&);
     ~TerminalManager(){};
     void writeText(std::string Instructions) {
         //Split the instructions by @ sign, read any color inputs
@@ -59,23 +62,81 @@ public:
         SetConsoleCursorPosition(TM, { 0, 1 });
     }
 
+    bool ValidInput(){
+        if (std::cin.fail()) {
+            std::cin.clear(); // clear error flags
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // discard bad input
+            return false;
+        }
+        return true;
+    }
+
+    //Check if the command has the correct ammount of arguments, 1 is the command with no arguments
+    bool CheckArguments(int Expected, int Actual){
+        if(Actual>Expected){
+            writeText("@RED@Too many arguments@WHITE@ " + std::to_string(Expected) + " argument(s) expected, " +  std::to_string(Actual) + " provided\n");
+            return false;
+        } else if (Actual<Expected)
+        {
+            writeText("@RED@Too few arguments@WHITE@ " + std::to_string(Expected) + " argument(s) expected, " +  std::to_string(Actual) + " provided\n");
+            return false;
+        }
+
+        return true;
+    }
+
+    void RunCommand(std::string command){
+        std::istringstream ss(command);
+        std::string commandlet;
+        std::vector<std::string> fullCommand;
+
+        while (ss >> commandlet){
+            fullCommand.push_back(commandlet);
+        }
+
+        if(fullCommand[0] == "exploits"){
+            if(!CheckArguments(1, fullCommand.size())){
+             return;   
+            } else{
+                std::cout << "Loaded exploits:\n";
+                for (size_t i = 0; i < loaded_exploits.size(); ++i) {
+                    std::cout << i + 1 << ". " << loaded_exploits[i]->getName() << "\n";
+                }
+            }
+        } else if(fullCommand[0] == "exploit"){
+            if(!CheckArguments(2, fullCommand.size())){
+             return;   
+            } else{
+                //select exploit
+            }
+        } else if(fullCommand[0] == "clear"){
+            if(!CheckArguments(1, fullCommand.size())){
+             return;   
+            } else{
+                ClearConsole();
+            }
+        } else{
+            writeText("@RED@No Command Found@WHITE@\n");
+        }
+    }
+
     void CommandExploit(){
         
     }
 };
 
 
-TerminalManager::TerminalManager(HANDLE HD) : TM(HD) {}
+TerminalManager::TerminalManager(HANDLE HD, std::vector<Exploit*>& DLLRef) : TM(HD), loaded_exploits(DLLRef) {}
 
 int main(){
     HANDLE stdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    // Get handle to terminal
-    auto TM = new TerminalManager(stdHandle);
-    TM->ClearConsole();
-
     std::vector<Exploit*> loaded_exploits;
     std::vector<HMODULE> dlls;
+
+    // Get handle to terminal
+    auto TM = new TerminalManager(stdHandle, loaded_exploits);
+    TM->ClearConsole();
 
     for (const auto& file : std::filesystem::directory_iterator("./exploits")){
         if (file.path().extension() == ".dll") {
@@ -95,28 +156,37 @@ int main(){
             }
         }
     }
+    std::cout << "Welcome to Cydle 1.1\n";
+
     while(true)
     {
-        std::cout << "Loaded exploits:\n";
-        for (size_t i = 0; i < loaded_exploits.size(); ++i) {
-            std::cout << i + 1 << ". " << loaded_exploits[i]->getName() << "\n";
-        }
+    
+        std::string command;
+        std::getline(std::cin,command);
+        if(command == "") { TM->writeText("@RED@No Command Found@WHITE@\n"); continue; };
+        //std::cout << "You entered: " << command;
+        TM->RunCommand(command);
 
-        int choice;
-        std::cout << "Choose an exploit to run: ";
-        std::cin >> choice;
 
-        if (std::cin.fail()) {
-            std::cin.clear(); // clear error flags
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // discard bad input
-            TM->writeText("@RED@[!]@WHITE@ Invalid input. Please enter a number.\n");
+        /*if(command == "exploits") {
+            std::cout << "Loaded exploits:\n";
+                for (size_t i = 0; i < loaded_exploits.size(); ++i) {
+                    std::cout << i + 1 << ". " << loaded_exploits[i]->getName() << "\n";
+                }
+        }*/
+
+
+        /*if(!TM->ValidInput())
+        {
+            TM->writeText("@RED@[!]@WHITE@ Invalid input.\n");
             continue;
-        }
+        }*/
+        
 
-        if (choice > 0 && choice <= (int)loaded_exploits.size()) {
+        /*if (choice > 0 && choice <= (int)loaded_exploits.size()) {
             TM->writeText(loaded_exploits[choice-1]->instructions());
             //loaded_exploits[choice - 1]->execute();
-        }
+        }*/
     }
     for (auto e : loaded_exploits) delete e;
     for (auto d : dlls) FreeLibrary(d);

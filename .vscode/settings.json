@@ -59,6 +59,7 @@
         "xtr1common": "cpp",
         "xutility": "cpp",
         "thread": "cpp",
-        "stop_token": "cpp"
+        "stop_token": "cpp",
+        "mutex": "cpp"
     }
 }

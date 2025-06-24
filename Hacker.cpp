@@ -6,6 +6,8 @@
 #include <sstream>
 #include <limits> 
 
+#include <thread>
+
 
 typedef Exploit* (*CreateExploitFn)();
 
@@ -13,6 +15,10 @@ class TerminalManager{
 private:
     std::vector<Exploit*>& loaded_exploits;
     HANDLE TM;
+    int CRYPTO = 1;
+    int CASH = 1;
+    DWORD originalMode;
+
 public:
     TerminalManager(HANDLE, std::vector<Exploit*>&);
     ~TerminalManager(){};
@@ -38,6 +44,23 @@ public:
         
     }
 
+
+    void UpdateHeader() {
+        while(true){
+            CASH++;
+            CONSOLE_SCREEN_BUFFER_INFO CSBI;
+            GetConsoleScreenBufferInfo(TM, &CSBI);
+            COORD TypingPos = CSBI.dwCursorPosition;
+
+            SetConsoleCursorPosition(TM, { 0, 0 });
+            writeText("@BLUE@CRYPTO:@WHITE@ " + std::to_string(CRYPTO) + " " + "@YELLOW@CASH:@WHITE@ " + std::to_string(CASH));
+            SetConsoleCursorPosition(TM, TypingPos);
+           
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+        }
+    }
+
     void ClearConsole() {
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         DWORD count;
@@ -56,8 +79,6 @@ public:
         // Move the cursor to the top-left corner
         SetConsoleCursorPosition(TM, { 0, 0 });
 
-        int CRYPTO = 5492;
-        int CASH = 5492;
         writeText("@BLUE@CRYPTO:@WHITE@ " + std::to_string(CRYPTO) + " " + "@YELLOW@CASH:@WHITE@ " + std::to_string(CASH));
         SetConsoleCursorPosition(TM, { 0, 1 });
     }
@@ -115,6 +136,12 @@ public:
             } else{
                 ClearConsole();
             }
+        } else if(fullCommand[0] == "update"){
+            if(!CheckArguments(1, fullCommand.size())){
+             return;   
+            } else{
+                // Put console into update mode where it refreshes your crypto ammount but doesnt allow input
+            }
         } else{
             writeText("@RED@No Command Found@WHITE@\n");
         }
@@ -156,6 +183,8 @@ int main(){
             }
         }
     }
+
+    std::thread hudThread(TerminalManager::UpdateHeader,TM);
     std::cout << "Welcome to Cydle 1.1\n";
 
     while(true)
@@ -188,6 +217,7 @@ int main(){
             //loaded_exploits[choice - 1]->execute();
         }*/
     }
+    hudThread.join();
     for (auto e : loaded_exploits) delete e;
     for (auto d : dlls) FreeLibrary(d);
     return 0;

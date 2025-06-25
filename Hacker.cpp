@@ -6,9 +6,6 @@
 #include <sstream>
 #include <limits> 
 
-#include <thread>
-
-
 typedef Exploit* (*CreateExploitFn)();
 
 class TerminalManager{
@@ -44,23 +41,6 @@ public:
         
     }
 
-
-    void UpdateHeader() {
-        while(true){
-            CASH++;
-            CONSOLE_SCREEN_BUFFER_INFO CSBI;
-            GetConsoleScreenBufferInfo(TM, &CSBI);
-            COORD TypingPos = CSBI.dwCursorPosition;
-
-            SetConsoleCursorPosition(TM, { 0, 0 });
-            writeText("@BLUE@CRYPTO:@WHITE@ " + std::to_string(CRYPTO) + " " + "@YELLOW@CASH:@WHITE@ " + std::to_string(CASH));
-            SetConsoleCursorPosition(TM, TypingPos);
-           
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-        }
-    }
-
     void ClearConsole() {
         CONSOLE_SCREEN_BUFFER_INFO csbi;
         DWORD count;
@@ -93,16 +73,19 @@ public:
     }
 
     //Check if the command has the correct ammount of arguments, 1 is the command with no arguments
-    bool CheckArguments(int Expected, int Actual){
+    bool CheckArguments(int Expected, int Actual, bool WriteText = true){
         if(Actual>Expected){
-            writeText("@RED@Too many arguments@WHITE@ " + std::to_string(Expected) + " argument(s) expected, " +  std::to_string(Actual) + " provided\n");
+            if(WriteText){
+                writeText("@RED@Too many arguments@WHITE@ " + std::to_string(Expected) + " argument(s) expected, " +  std::to_string(Actual) + " provided\n");
+            }
             return false;
         } else if (Actual<Expected)
         {
-            writeText("@RED@Too few arguments@WHITE@ " + std::to_string(Expected) + " argument(s) expected, " +  std::to_string(Actual) + " provided\n");
+            if(WriteText){
+                writeText("@RED@Too few arguments@WHITE@ " + std::to_string(Expected) + " argument(s) expected, " +  std::to_string(Actual) + " provided\n");
+            }
             return false;
         }
-
         return true;
     }
 
@@ -142,6 +125,16 @@ public:
             } else{
                 // Put console into update mode where it refreshes your crypto ammount but doesnt allow input
             }
+        } else if(fullCommand[0] == "help"){
+            if(CheckArguments(2, fullCommand.size(), false)){
+      
+                writeText("@WHITE@Reading more about command @BLUE@" + fullCommand[1] +"@WHITE@\n");   
+                return;             
+            } else if(CheckArguments(1, fullCommand.size(), false)){
+                writeText("@WHITE@Use the help command to learn more about commands with help [name]. Available commands include:\nclear\nexploit\nexploits\n");
+            } else{
+                writeText("@RED@Too many arguments@WHITE@ " + std::to_string(1) + " argument(s) expected, " +  std::to_string(fullCommand.size()) + " provided\n");
+            } 
         } else{
             writeText("@RED@No Command Found@WHITE@\n");
         }
@@ -184,19 +177,18 @@ int main(){
         }
     }
 
-    std::thread hudThread(TerminalManager::UpdateHeader,TM);
     std::cout << "Welcome to Cydle 1.1\n";
 
     while(true)
     {
-    
+        std::cout<<"hacker/win10>";
         std::string command;
         std::getline(std::cin,command);
         if(command == "") { TM->writeText("@RED@No Command Found@WHITE@\n"); continue; };
         //std::cout << "You entered: " << command;
         TM->RunCommand(command);
 
-
+        std::cout << "\n";
         /*if(command == "exploits") {
             std::cout << "Loaded exploits:\n";
                 for (size_t i = 0; i < loaded_exploits.size(); ++i) {
@@ -217,7 +209,6 @@ int main(){
             //loaded_exploits[choice - 1]->execute();
         }*/
     }
-    hudThread.join();
     for (auto e : loaded_exploits) delete e;
     for (auto d : dlls) FreeLibrary(d);
     return 0;

@@ -8,7 +8,7 @@
 
 typedef Exploit* (*CreateExploitFn)();
 class TerminalManager{
-    
+
 private:
     std::vector<Exploit*>& loaded_exploits;
     HANDLE TM;

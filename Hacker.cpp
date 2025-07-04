@@ -33,6 +33,8 @@ public:
                 SetConsoleTextAttribute(TM, 0x0E);
             } else if (token == "BLUE") {
                 SetConsoleTextAttribute(TM, 0x09);
+            } else if (token == "GREEN") {
+                SetConsoleTextAttribute(TM, 0x0A);
             } else{
                 std::cout << token;
             }
@@ -111,6 +113,20 @@ public:
             if(!CheckArguments(2, fullCommand.size())){
              return;   
             } else{
+                int cmdArgument;
+                try {
+                    cmdArgument = std::stoi(fullCommand[1]);
+                } catch (const std::exception& e){
+                    writeText("Second argument must be an integer value corresponding with your exploit selection");
+                    return;
+                }
+                if (cmdArgument > 0 && cmdArgument <= (int)loaded_exploits.size()) {
+                    const auto& messageData = loaded_exploits[std::stoi(fullCommand[1])-1]->instructions();
+                    for (const auto& message : messageData){
+                        writeText(message);
+                    }
+                }
+            //loaded_exploits[choice - 1]->execute();
                 //select exploit
             }
         } else if(fullCommand[0] == "clear"){
@@ -124,6 +140,12 @@ public:
              return;   
             } else{
                 // Put console into update mode where it refreshes your crypto ammount but doesnt allow input
+            }
+        }  else if(fullCommand[0] == "options"){
+            if(!CheckArguments(1, fullCommand.size())){
+             return;   
+            } else{
+
             }
         } else if(fullCommand[0] == "help"){
             if(CheckArguments(2, fullCommand.size(), false)){

@@ -161,7 +161,6 @@ public:
             writeText("@RED@No Command Found@WHITE@\n");
         }
     }
-
     void CommandExploit(){
         
     }

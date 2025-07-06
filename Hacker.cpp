@@ -5,7 +5,7 @@
 #include <windows.h>
 #include <sstream>
 #include <limits> 
-
+#include <curl/curl.h>
 typedef Exploit* (*CreateExploitFn)();
 class TerminalManager{
 
@@ -211,6 +211,7 @@ int main(){
         TM->RunCommand(command);
 
         std::cout << "\n";
+        
         /*if(command == "exploits") {
             std::cout << "Loaded exploits:\n";
                 for (size_t i = 0; i < loaded_exploits.size(); ++i) {

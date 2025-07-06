@@ -6,7 +6,15 @@
 #include <sstream>
 #include <limits> 
 #include <curl/curl.h>
+
+//COMPILE WITH g++ Hacker.cpp -Icurl\include -Lcurl\lib -lcurl
 typedef Exploit* (*CreateExploitFn)();
+
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
+    size_t totalSize = size * nmemb;
+    output->append(static_cast<char*>(contents), totalSize);
+    return totalSize;
+}
 class TerminalManager{
 
 private:
@@ -197,9 +205,29 @@ int main(){
             }
         }
     }
+    CURL* curl = curl_easy_init();
+    std::string response;
+
+    
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, "https://httpbin.org/get");                // Set the URL
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);     
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);            // Set callback to write response
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);    
+         CURLcode res = curl_easy_perform(curl);                                       // Perform the request
+
+        if (res != CURLE_OK) {
+            std::cerr << "Request failed: " << curl_easy_strerror(res) << "\n";
+        } else {
+            std::cout << "Response:\n" << response << "\n";                           // Print the response
+        }
+
+        curl_easy_cleanup(curl);  // Cleanup
+    } 
 
     std::cout << "Welcome to Cydle 1.1\n";
-
+        
     while(true)
     {
         
